@@ -190,7 +190,7 @@
         <table id="performanceTable" style="display: none;">
             <thead>
                 <tr>
-                    <th><i class="fas fa-hashtag"></i> ID</th>
+                    <th><i class="fas fa-hashtag"></i> Nomor</th>
                     <th><i class="fas fa-stopwatch"></i> Kecepatan</th>
                     <th><i class="fas fa-comment-user"></i> Pesan User</th>
                     <th><i class="fas fa-robot"></i> Respon Bot</th>
@@ -231,7 +231,7 @@
                 const timeFormatted = `${parseFloat(item.time).toFixed(1)}s`;
 
                 row.innerHTML = `
-                    <td><strong>#${item.id}</strong></td>
+                    <td><strong>${item.id}</strong></td>
                     <td><span class="badge-time">${timeFormatted}</span></td>
                     <td><span class="chat-text"><small class="user-tag">USER:</small><br>${item.user_chat}</span></td>
                     <td><span class="chat-text"><small class="bot-tag">BOT:</small><br>${item.chatbot_respon}</span></td>
