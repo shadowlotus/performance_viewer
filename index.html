@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Performa Chatbot - Nuansa Bali</title>
-    <!-- Google Fonts: Playfair Display for headers, Montserrat for body -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome for valid icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bali-gold: #d4af37;
@@ -51,7 +50,9 @@
         header {
             text-align: center;
             margin-bottom: 50px;
-            border-bottom: 3px double var(--bali-gold);
+            border-bottom: 3 double var(--bali-gold);
+            border-bottom-style: double;
+            border-bottom-width: 5px;
             padding-bottom: 20px;
         }
 
@@ -76,6 +77,85 @@
             margin: 0 20px;
             vertical-align: middle;
         }
+
+        /* ==================== ELEMEN BARU: METRIK & GRAFIK ==================== */
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            color: var(--bali-red);
+            font-size: 1.8rem;
+            margin: 40px 0 20px 0;
+            border-bottom: 2px solid var(--bali-gold);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: #fff;
+            border: 1px solid var(--bali-gold);
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            color: var(--bali-red);
+            margin-right: 20px;
+            background: var(--bali-cream);
+            padding: 15px;
+            border-radius: 50%;
+            border: 1px solid var(--bali-gold);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-info {
+            flex-grow: 1;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--bali-stone);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--bali-dark);
+            font-family: monospace;
+        }
+
+        .chart-container {
+            background: #fff;
+            border: 2px solid var(--bali-gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        /* ====================================================================== */
 
         /* Table Styling */
         .table-wrapper {
@@ -186,20 +266,74 @@
         <p>Memuat data dari pustaka digital...</p>
     </div>
 
-    <div class="table-wrapper">
-        <table id="performanceTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th><i class=""></i> Nomor</th>
-                    <th><i class="fas fa-stopwatch"></i> Kecepatan</th>
-                    <th><i class="fas fa-comment-user"></i> Pesan User</th>
-                    <th><i class="fas fa-robot"></i> Respon Bot</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Data akan diisi oleh JavaScript -->
-            </tbody>
-        </table>
+    <div id="mainContent" style="display: none;">
+        
+        <h2 class="section-title"><i class="fas fa-chart-pie"></i> Analisis Statistik Performa</h2>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-vial"></i></div>
+                <div class="metric-info">
+                    <div class="metric-label">Jumlah Pengujian</div>
+                    <div class="metric-value" id="stat-count">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-bolt"></i></div>
+                <div class="metric-info">
+                    <div class="metric-label">Respon Minimum</div>
+                    <div class="metric-value" id="stat-min">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-hourglass-end"></i></div>
+                <div class="metric-info">
+                    <div class="metric-label">Respon Maksimum</div>
+                    <div class="metric-value" id="stat-max">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-calculator"></i></div>
+                <div class="metric-info">
+                    <div class="metric-label">Rata - Rata (Mean)</div>
+                    <div class="metric-value" id="stat-avg">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-arrows-left-right-to-line"></i></div>
+                <div class="metric-info">
+                    <div class="metric-label">Median</div>
+                    <div class="metric-value" id="stat-median">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="metric-info">
+                    <div class="metric-label">Standar Deviasi</div>
+                    <div class="metric-value" id="stat-sd">-</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title"><i class="fas fa-chart-line"></i> Grafik Tren Waktu Respon</h2>
+        <div class="chart-container">
+            <canvas id="performanceChart" height="120"></canvas>
+        </div>
+
+        <h2 class="section-title"><i class="fas fa-list"></i> Rincian Data Log</h2>
+        <div class="table-wrapper">
+            <table id="performanceTable">
+                <thead>
+                    <tr>
+                        <th>Nomor</th>
+                        <th><i class="fas fa-stopwatch"></i> Kecepatan</th>
+                        <th><i class="fas fa-comment-user"></i> Pesan User</th>
+                        <th><i class="fas fa-robot"></i> Respon Bot</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+        </div>
     </div>
 
     <footer>
@@ -210,8 +344,101 @@
 <script>
     const API_URL = 'https://n8n.arcomteknologi.co.id/webhook/36a11683-faa5-487b-8bc8-5dbd61ed97e0';
 
+    // Fungsi utilitas untuk membersihkan data string menjadi float murni
+    function cleanTimeValue(timeStr) {
+        if (typeof timeStr === 'number') return timeStr;
+        if (!timeStr) return 0;
+        // Menghapus karakter non-angka/non-titik seperti 's', 'ms', atau spasi
+        const cleaned = timeStr.replace(/[^0-9.]/g, '');
+        return parseFloat(cleaned) || 0;
+    }
+
+    // Fungsi Perhitungan Matematika & Statistik
+    function calculateStatistics(times) {
+        if (times.length === 0) return { count: 0, min: 0, max: 0, avg: 0, median: 0, sd: 0 };
+
+        const count = times.length;
+        const min = Math.min(...times);
+        const max = Math.max(...times);
+        
+        // Rata-rata
+        const sum = times.reduce((a, b) => a + b, 0);
+        const avg = sum / count;
+
+        // Median
+        const sortedTimes = [...times].sort((a, b) => a - b);
+        const mid = Math.floor(count / 2);
+        const median = count % 2 !== 0 ? sortedTimes[mid] : (sortedTimes[mid - 1] + sortedTimes[mid]) / 2;
+
+        // Standar Deviasi
+        const squareDiffs = times.map(value => {
+            const diff = value - avg;
+            return diff * diff;
+        });
+        const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / count;
+        const sd = Math.sqrt(avgSquareDiff);
+
+        return { count, min, max, avg, median, sd };
+    }
+
+    // Fungsi Render Grafik Line dengan tema warna senada
+    function renderChart(labels, dataValues) {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Waktu Respon (detik)',
+                    data: dataValues,
+                    borderColor: '#8b0000', // --bali-red
+                    backgroundColor: 'rgba(212, 175, 55, 0.15)', // --bali-gold dengan opacity
+                    borderWidth: 3,
+                    pointBackgroundColor: '#d4af37', // --bali-gold
+                    pointBorderColor: '#1a1a1a', // --bali-dark
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.3, // Membuat garis sedikit melengkung halus
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: { family: 'Montserrat', weight: '600' },
+                            color: '#4a4a4a'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Detik (s)',
+                            color: '#4a4a4a',
+                            font: { family: 'Montserrat', weight: '600' }
+                        },
+                        grid: { color: 'rgba(214, 175, 55, 0.1)' }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'ID / Nomor Pengujian',
+                            color: '#4a4a4a',
+                            font: { family: 'Montserrat', weight: '600' }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
     async function getChatData() {
-        const table = document.getElementById('performanceTable');
+        const mainContent = document.getElementById('mainContent');
         const tableBody = document.getElementById('tableBody');
         const loading = document.getElementById('loading');
         const errorMsg = document.getElementById('error-msg');
@@ -221,14 +448,20 @@
             if (!response.ok) throw new Error('Network response was not ok');
             
             const data = await response.json();
-            
-            tableBody.innerHTML = ''; // Reset tabel
+            tableBody.innerHTML = ''; 
+
+            const rawTimes = [];
+            const labels = [];
 
             data.forEach(item => {
+                // 1. Pembersihan string pada key 'time' menjadi float murni
+                const numericTime = cleanTimeValue(item.time);
+                rawTimes.push(numericTime);
+                labels.push(`ID-${item.id}`);
+
+                // 2. Tampilkan ke dalam tabel (tetap menggunakan format bawaan Anda)
                 const row = document.createElement('tr');
-                
-                // Format waktu menjadi X.Xs
-                const timeFormatted = `${parseFloat(item.time).toFixed(1)}s`;
+                const timeFormatted = `${numericTime.toFixed(1)}s`;
 
                 row.innerHTML = `
                     <td><strong>${item.id}</strong></td>
@@ -239,8 +472,23 @@
                 tableBody.appendChild(row);
             });
 
+            // 3. Hitung Kalkulasi Statistik Matematika
+            const stats = calculateStatistics(rawTimes);
+
+            // 4. Update data elemen UI card metrik ke browser
+            document.getElementById('stat-count').innerText = `${stats.count} Kali`;
+            document.getElementById('stat-min').innerText = `${stats.min.toFixed(2)}s`;
+            document.getElementById('stat-max').innerText = `${stats.max.toFixed(2)}s`;
+            document.getElementById('stat-avg').innerText = `${stats.avg.toFixed(2)}s`;
+            document.getElementById('stat-median').innerText = `${stats.median.toFixed(2)}s`;
+            document.getElementById('stat-sd').innerText = `${stats.sd.toFixed(2)}s`;
+
+            // 5. Inisialisasi Chart Grafiknya
+            renderChart(labels, rawTimes);
+
+            // Tampilkan konten utama & sembunyikan loader
             loading.style.display = 'none';
-            table.style.display = 'table';
+            mainContent.style.display = 'block';
 
         } catch (error) {
             console.error('Error:', error);
@@ -250,7 +498,6 @@
         }
     }
 
-    // Eksekusi fungsi saat halaman selesai dimuat
     document.addEventListener('DOMContentLoaded', getChatData);
 </script>
 
