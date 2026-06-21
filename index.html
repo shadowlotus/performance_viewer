@@ -134,10 +134,10 @@
         .rate-orange .hero-value { color: var(--gutt-orange) !important; }
         .rate-green .hero-value { color: var(--gutt-green) !important; }
 
-        /* 2x2 symmetric grid for secondary stats */
+        /* 3-column symmetric grid for 5 secondary stats */
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
         }
 
@@ -256,7 +256,6 @@
 
         .badge-guttman.relevan { background-color: var(--gutt-green); }
         .badge-guttman.tidak-relevan { background-color: var(--gutt-red); }
-        .badge-guttman.null-value { background-color: var(--nia-gray); }
 
         .chat-text { max-width: 300px; display: block; }
         .user-tag { color: var(--nia-gray); font-weight: 600; }
@@ -286,6 +285,10 @@
             font-size: 0.85rem;
             border-top: 1px solid var(--nia-border);
             padding-top: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 600px) {
@@ -333,6 +336,13 @@
                     <div class="metric-info">
                         <div class="metric-label">Jumlah Pengujian</div>
                         <div class="metric-value" id="stat-count">-</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="fas fa-history"></i></div>
+                    <div class="metric-info">
+                        <div class="metric-label">Total Waktu Respon</div>
+                        <div class="metric-value" id="stat-total">-</div>
                     </div>
                 </div>
                 <div class="metric-card">
@@ -397,12 +407,13 @@
     }
 
     function calculateStatistics(times) {
-        if (times.length === 0) return { count: 0, min: 0, max: 0, avg: 0 };
+        if (times.length === 0) return { count: 0, min: 0, max: 0, avg: 0, total: 0 };
         const count = times.length;
         const min = Math.min(...times);
         const max = Math.max(...times);
-        const avg = times.reduce((a, b) => a + b, 0) / count;
-        return { count, min, max, avg };
+        const total = times.reduce((a, b) => a + b, 0);
+        const avg = total / count;
+        return { count, min, max, avg, total };
     }
 
     function renderChart(labels, dataValues) {
@@ -466,30 +477,21 @@
             const rawTimes = [];
             const labels = [];
             let totalRelevan = 0;
-            let validGuttCount = 0; // Variabel penampung data valid (bukan null/kosong)
+            const totalData = data.length;
 
             data.forEach(item => {
                 const numericTime = cleanTimeValue(item.time);
                 rawTimes.push(numericTime);
                 labels.push(`ID-${item.id}`);
 
-                // Filter validasi: abaikan jika null, undefined, atau string kosong
-                const hasGuttValue = item.gutt !== null && item.gutt !== undefined && item.gutt !== '';
+                const guttValue = parseInt(item.gutt);
                 let guttmanBadge = '';
 
-                if (hasGuttValue) {
-                    validGuttCount++; // Data valid dihitung sebagai pembagi GCR
-                    const guttValue = parseInt(item.gutt);
-                    
-                    if (guttValue === 1) {
-                        totalRelevan++;
-                        guttmanBadge = `<span class="badge-guttman relevan"><i class="fas fa-check-circle"></i> 1 (Relevan)</span>`;
-                    } else {
-                        guttmanBadge = `<span class="badge-guttman tidak-relevan"><i class="fas fa-times-circle"></i> 0 (Tidak Relevan)</span>`;
-                    }
+                if (guttValue === 1) {
+                    totalRelevan++;
+                    guttmanBadge = `<span class="badge-guttman relevan"><i class="fas fa-check-circle"></i> 1 (Relevan)</span>`;
                 } else {
-                    // Tampilan jika data gutt bernilai null / belum dinilai
-                    guttmanBadge = `<span class="badge-guttman null-value"><i class="fas fa-minus-circle"></i> Belum Dinilai</span>`;
+                    guttmanBadge = `<span class="badge-guttman tidak-relevan"><i class="fas fa-times-circle"></i> 0 (Tidak Relevan)</span>`;
                 }
 
                 const row = document.createElement('tr');
@@ -503,8 +505,7 @@
                 tableBody.appendChild(row);
             });
 
-            // Perhitungan GCR / Relevance Rate menggunakan total data yang valid saja
-            const relevanceRate = validGuttCount > 0 ? (totalRelevan / validGuttCount) * 100 : 0;
+            const relevanceRate = totalData > 0 ? (totalRelevan / totalData) * 100 : 0;
 
             const heroCard = document.getElementById('hero-card');
             heroCard.classList.remove('rate-red', 'rate-orange', 'rate-green');
@@ -516,6 +517,7 @@
 
             document.getElementById('stat-relevance-rate').innerText = `${relevanceRate.toFixed(1)}%`;
             document.getElementById('stat-count').innerText = `${stats.count} Kali`;
+            document.getElementById('stat-total').innerText = `${stats.total.toFixed(2)}s`;
             document.getElementById('stat-min').innerText = `${stats.min.toFixed(2)}s`;
             document.getElementById('stat-max').innerText = `${stats.max.toFixed(2)}s`;
             document.getElementById('stat-avg').innerText = `${stats.avg.toFixed(2)}s`;
@@ -529,7 +531,7 @@
             console.error('Error:', error);
             loading.style.display = 'none';
             errorMsg.style.display = 'block';
-            errorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> Terjadi kesalahan saat mengambil data.<br><small>${error.message}. Pastikan CORS Webhook sudah aktif.</small>`;
+            errorMsg.innerHTML += `<br><small>${error.message}. Pastikan CORS Webhook sudah aktif.</small>`;
         }
     }
 
