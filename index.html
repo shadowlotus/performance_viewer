@@ -89,7 +89,6 @@
             margin-bottom: 40px;
         }
 
-        /* Hero card — Relevance Rate (full width, highlighted) */
         .metric-hero {
             background: #ffffff;
             border: 2px solid var(--nia-red);
@@ -129,12 +128,10 @@
             line-height: 1;
         }
 
-        /* Hero rate colors */
         .rate-red  .hero-value { color: var(--gutt-red) !important; }
         .rate-orange .hero-value { color: var(--gutt-orange) !important; }
         .rate-green .hero-value { color: var(--gutt-green) !important; }
 
-        /* 3-column symmetric grid for 5 secondary stats */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -189,14 +186,37 @@
             color: var(--nia-dark);
         }
 
-        /* Chart */
+        /* ── CHARTS LAYOUT ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
         .chart-container {
             background: #ffffff;
             border: 1px solid var(--nia-border);
             border-radius: 8px;
             padding: 20px;
-            margin-bottom: 40px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chart-container.pie-box {
+            align-items: center;
+        }
+
+        .chart-container h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--nia-dark);
+            text-align: center;
+            width: 100%;
         }
 
         /* Table */
@@ -289,6 +309,7 @@
 
         @media (max-width: 900px) {
             .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 600px) {
@@ -370,9 +391,18 @@
 
         </div>
 
-        <h2 class="section-title"><i class="fas fa-chart-line"></i> Grafik Tren Waktu Respon</h2>
-        <div class="chart-container">
-            <canvas id="performanceChart" height="120"></canvas>
+        <h2 class="section-title"><i class="fas fa-chart-bar"></i> Visualisasi Data Analitik</h2>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>Tren Waktu Respon (detik)</h3>
+                <canvas id="performanceChart"></canvas>
+            </div>
+            
+            <div class="chart-container pie-box">
+                <h3>Interval Waktu</h3>
+                <canvas id="intervalPieChart" width="320" height="320"></canvas>
+            </div>
         </div>
 
         <h2 class="section-title"><i class="fas fa-list"></i> Rincian Data Log</h2>
@@ -416,7 +446,7 @@
         return { count, min, max, avg, total };
     }
 
-    function renderChart(labels, dataValues) {
+    function renderLineChart(labels, dataValues) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
@@ -438,14 +468,7 @@
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: {
-                        labels: {
-                            font: { family: 'Montserrat', weight: '600', size: 12 },
-                            color: '#1a1a1a'
-                        }
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -455,6 +478,70 @@
                     x: {
                         title: { display: true, text: 'ID / Nomor Pengujian', color: '#666666', font: { family: 'Montserrat', weight: '600' } },
                         grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // Fungsi Pengolah Otomatis Data API Ke Bentuk Distribusi Frekuensi Pie Chart
+    function renderPieChart(times) {
+        // Inisialisasi hitungan frekuensi masing-masing interval awal dari 0
+        let range1 = 0, range2 = 0, range3 = 0, range4 = 0, range5 = 0;
+        const total = times.length;
+
+        // Distribusikan data waktu respon API ke masing-masing kelompok interval
+        times.forEach(t => {
+            if (t >= 0.00 && t <= 3.00) range1++;
+            else if (t > 3.00 && t <= 6.00) range2++;
+            else if (t > 6.00 && t <= 9.00) range3++;
+            else if (t > 9.00 && t <= 12.00) range4++;
+            else if (t > 12.00) range5++;
+        });
+
+        // Hitung persentase real-time berdasarkan total log data aktual
+        const p1 = total > 0 ? ((range1 / total) * 100).toFixed(2) : 0;
+        const p2 = total > 0 ? ((range2 / total) * 100).toFixed(2) : 0;
+        const p3 = total > 0 ? ((range3 / total) * 100).toFixed(2) : 0;
+        const p4 = total > 0 ? ((range4 / total) * 100).toFixed(2) : 0;
+        const p5 = total > 0 ? ((range5 / total) * 100).toFixed(2) : 0;
+
+        const ctx = document.getElementById('intervalPieChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [
+                    `0.00 – 3.00 s (${p1}%)`, 
+                    `3.01 – 6.00 s (${p2}%)`, 
+                    `6.01 – 9.00 s (${p3}%)`, 
+                    `9.01 – 12.00 s (${p4}%)`, 
+                    `> 12.00 s (${p5}%)`
+                ],
+                datasets: [{
+                    data: [range1, range2, range3, range4, range5],
+                    backgroundColor: ['#27ae60', '#2980b9', '#f39c12', '#d35400', '#c0392b'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { family: 'Montserrat', size: 10, weight: '500' },
+                            boxWidth: 12,
+                            padding: 8
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` Jumlah: ${context.raw} Chat`;
+                            }
+                        }
                     }
                 }
             }
@@ -522,7 +609,9 @@
             document.getElementById('stat-max').innerText = `${stats.max.toFixed(2)}s`;
             document.getElementById('stat-avg').innerText = `${stats.avg.toFixed(2)}s`;
 
-            renderChart(labels, rawTimes);
+            // Menjalankan render grafik dengan data mentah dari API
+            renderLineChart(labels, rawTimes);
+            renderPieChart(rawTimes); 
 
             loading.style.display = 'none';
             mainContent.style.display = 'block';
