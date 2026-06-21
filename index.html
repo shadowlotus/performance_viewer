@@ -256,6 +256,7 @@
 
         .badge-guttman.relevan { background-color: var(--gutt-green); }
         .badge-guttman.tidak-relevan { background-color: var(--gutt-red); }
+        .badge-guttman.null-value { background-color: var(--nia-gray); }
 
         .chat-text { max-width: 300px; display: block; }
         .user-tag { color: var(--nia-gray); font-weight: 600; }
@@ -318,7 +319,6 @@
 
         <div class="metrics-wrapper">
 
-            <!-- Hero: Relevance Rate — full width, highlighted -->
             <div class="metric-hero" id="hero-card">
                 <div class="hero-icon"><i class="fas fa-bullseye"></i></div>
                 <div>
@@ -327,7 +327,6 @@
                 </div>
             </div>
 
-            <!-- 2×2 symmetric grid -->
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-icon"><i class="fas fa-vial"></i></div>
@@ -372,7 +371,7 @@
                 <thead>
                     <tr>
                         <th>Nomor</th>
-                        <th><i class=""></i> Kecepatan</th>
+                        <th>Kecepatan</th>
                         <th><i class="fas fa-comment-user"></i> Pesan User</th>
                         <th><i class="fas fa-robot"></i> Respon Bot</th>
                         <th><i class="fas fa-clipboard-check"></i> Guttman</th>
@@ -467,21 +466,30 @@
             const rawTimes = [];
             const labels = [];
             let totalRelevan = 0;
-            const totalData = data.length;
+            let validGuttCount = 0; // Variabel penampung data valid (bukan null/kosong)
 
             data.forEach(item => {
                 const numericTime = cleanTimeValue(item.time);
                 rawTimes.push(numericTime);
                 labels.push(`ID-${item.id}`);
 
-                const guttValue = parseInt(item.gutt);
+                // Filter validasi: abaikan jika null, undefined, atau string kosong
+                const hasGuttValue = item.gutt !== null && item.gutt !== undefined && item.gutt !== '';
                 let guttmanBadge = '';
 
-                if (guttValue === 1) {
-                    totalRelevan++;
-                    guttmanBadge = `<span class="badge-guttman relevan"><i class="fas fa-check-circle"></i> 1 (Relevan)</span>`;
+                if (hasGuttValue) {
+                    validGuttCount++; // Data valid dihitung sebagai pembagi GCR
+                    const guttValue = parseInt(item.gutt);
+                    
+                    if (guttValue === 1) {
+                        totalRelevan++;
+                        guttmanBadge = `<span class="badge-guttman relevan"><i class="fas fa-check-circle"></i> 1 (Relevan)</span>`;
+                    } else {
+                        guttmanBadge = `<span class="badge-guttman tidak-relevan"><i class="fas fa-times-circle"></i> 0 (Tidak Relevan)</span>`;
+                    }
                 } else {
-                    guttmanBadge = `<span class="badge-guttman tidak-relevan"><i class="fas fa-times-circle"></i> 0 (Tidak Relevan)</span>`;
+                    // Tampilan jika data gutt bernilai null / belum dinilai
+                    guttmanBadge = `<span class="badge-guttman null-value"><i class="fas fa-minus-circle"></i> Belum Dinilai</span>`;
                 }
 
                 const row = document.createElement('tr');
@@ -495,7 +503,8 @@
                 tableBody.appendChild(row);
             });
 
-            const relevanceRate = totalData > 0 ? (totalRelevan / totalData) * 100 : 0;
+            // Perhitungan GCR / Relevance Rate menggunakan total data yang valid saja
+            const relevanceRate = validGuttCount > 0 ? (totalRelevan / validGuttCount) * 100 : 0;
 
             const heroCard = document.getElementById('hero-card');
             heroCard.classList.remove('rate-red', 'rate-orange', 'rate-green');
@@ -520,7 +529,7 @@
             console.error('Error:', error);
             loading.style.display = 'none';
             errorMsg.style.display = 'block';
-            errorMsg.innerHTML += `<br><small>${error.message}. Pastikan CORS Webhook sudah aktif.</small>`;
+            errorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> Terjadi kesalahan saat mengambil data.<br><small>${error.message}. Pastikan CORS Webhook sudah aktif.</small>`;
         }
     }
 
